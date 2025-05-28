@@ -11,6 +11,13 @@ features include:
 - Real-time restock notifications as they occur.
 - Fully open-source and available for community use and contribution.
 
+# 💿Too Lazy to host your self?
+Don't Worry i've decided to use Vercel to host this api so u don't have to here is the url
+- https://growagardenapi.vercel.app/api/stock/GetStock
+- https://growagardenapi.vercel.app/api/GetWeather
+- https://growagardenapi.vercel.app/api/Item-Info
+- https://growagardenapi.vercel.app/api/stock/Restock-Time
+
 # ⚙️ Installation
 
 To get started with the Grow a Garden API, you’ll need to have Node.js installed. After that, you can set up the API with the following dependencies:
