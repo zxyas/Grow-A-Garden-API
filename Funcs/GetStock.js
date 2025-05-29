@@ -16,39 +16,49 @@ const options = {
     }
 };
 
-function fetchStocks(callback) {
+function fetchStocks(callback, errorCallback) {
     const req = https.request(options, (res) => {
         const chunks = [];
 
-        res.on("data", (chunk) => {
-            chunks.push(chunk);
-        });
+        res.on("data", (chunk) => chunks.push(chunk));
 
         res.on("end", () => {
-            const body = Buffer.concat(chunks);
-            const parsedData = JSON.parse(body.toString());
-            callback(parsedData);
+            const body = Buffer.concat(chunks).toString();
+
+            try {
+                const parsedData = JSON.parse(body);
+                callback(parsedData);
+            } catch (err) {
+                errorCallback({
+                    code: 500,
+                    message: `Invalid JSON response: ${err.message}`
+                });
+            }
         });
     });
 
     req.on("error", (e) => {
-        console.error(`Problem with request: ${e.message}`);
+        errorCallback({
+            code: 502,
+            message: `Problem with request: ${e.message}`
+        });
     });
 
     req.end();
 }
 
 function formatStocks(data) {
-    const stocks = data[0].result.data.json;
+    const stocks = data[0]?.result?.data?.json;
 
-    const formattedOutput = {
+    if (!stocks) throw new Error("Malformed data structure");
+
+    return {
         gearStock: formatStockItems(stocks.gearStock),
         eggStock: formatStockItems(stocks.eggStock),
         seedsStock: formatStockItems(stocks.seedsStock),
         nightStock: formatStockItems(stocks.nightStock),
         bloodStock: formatStockItems(stocks.bloodStock),
         cosmeticsStock: formatStockItems(stocks.cosmeticsStock),
-        
         lastSeen: {
             Seeds: formatLastSeenItems(stocks.lastSeen.Seeds),
             Gears: formatLastSeenItems(stocks.lastSeen.Gears),
@@ -56,8 +66,6 @@ function formatStocks(data) {
             Eggs: formatLastSeenItems(stocks.lastSeen.Eggs)
         }
     };
-
-    return formattedOutput;
 }
 
 function formatStockItems(items) {
@@ -80,10 +88,31 @@ function formatLastSeenItems(items) {
 
 function register(app) {
     app.get('/api/stock/GetStock', (req, res) => {
-        fetchStocks((data) => {
-            const formattedStocks = formatStocks(data);
-            res.json(formattedStocks);
-        });
+        fetchStocks(
+            (data) => {
+                try {
+                    const formattedStocks = formatStocks(data);
+                    res.status(200).json({
+                        success: true,
+                        ...formattedStocks
+                    });
+                } catch (err) {
+                    res.status(500).json({
+                        success: false,
+                        error: {
+                            code: 500,
+                            message: err.message
+                        }
+                    });
+                }
+            },
+            (err) => {
+                res.status(err.code || 500).json({
+                    success: false,
+                    error: err
+                });
+            }
+        );
     });
 }
 
