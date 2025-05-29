@@ -14,9 +14,7 @@ function processTimestamps(obj) {
         timestamp: numericTimestamp,
         LastSeen: originalTimestamp
       };
-    }
-
-    else if (val && typeof val === 'object') {
+    } else if (val && typeof val === 'object') {
       processTimestamps(val);
     }
   }
@@ -45,18 +43,16 @@ function fetchWeather(callback) {
       const body = Buffer.concat(chunks).toString();
       try {
         const weatherData = JSON.parse(body);
-
         processTimestamps(weatherData);
-
-        callback(null, weatherData);
+        callback(null, { success: true, data: weatherData });
       } catch (e) {
-        callback(e);
+        callback({ status: 500, message: "Failed to parse weather data" });
       }
     });
   });
 
   req.on("error", (err) => {
-    callback(err);
+    callback({ status: 500, message: err.message });
   });
 
   req.end();
@@ -64,11 +60,11 @@ function fetchWeather(callback) {
 
 function register(app) {
   app.get("/api/GetWeather", (req, res) => {
-    fetchWeather((error, data) => {
+    fetchWeather((error, result) => {
       if (error) {
-        res.status(500).json({ error: error.message || "Failed to fetch weather" });
+        res.status(error.status || 500).json({ success: false, error: error.message });
       } else {
-        res.json(data);
+        res.json(result);
       }
     });
   });
