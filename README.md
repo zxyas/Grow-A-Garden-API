@@ -1,5 +1,7 @@
 # 👋🏻 Introduction
 
+### If you like this pls give me a star 🙏
+
 Welcome to the **Grow a Garden API**. This open-source API provides a straightforward way to access in-game gardening data—including stock levels, weather conditions, and item information—without the need to host or maintain bots yourself.
 
 It uses the **Vulcan API** to gather all relevant information in real-time, eliminating the need for users to run and manage bots that stay AFK in the game. The API also supports real-time restock updates, ensuring you always have the most current data.
