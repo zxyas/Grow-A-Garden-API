@@ -44,7 +44,7 @@ function fetchWeather(callback) {
       try {
         const weatherData = JSON.parse(body);
         processTimestamps(weatherData);
-        callback(null, { success: true, data: weatherData });
+        callback(null, { success: true, ... weatherData });
       } catch (e) {
         callback({ status: 500, message: "Failed to parse weather data" });
       }
