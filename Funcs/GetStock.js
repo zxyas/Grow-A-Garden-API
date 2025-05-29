@@ -16,7 +16,7 @@ const options = {
     }
 };
 
-function fetchStocks(callback, errorCallback) {
+function fetchStocks(callback) {
     const req = https.request(options, (res) => {
         const chunks = [];
 
@@ -27,10 +27,10 @@ function fetchStocks(callback, errorCallback) {
 
             try {
                 const parsedData = JSON.parse(body);
-                callback(parsedData);
+                callback(null, parsedData);
             } catch (err) {
-                errorCallback({
-                    code: 500,
+                callback({
+                    status: 500,
                     message: `Invalid JSON response: ${err.message}`
                 });
             }
@@ -38,8 +38,8 @@ function fetchStocks(callback, errorCallback) {
     });
 
     req.on("error", (e) => {
-        errorCallback({
-            code: 502,
+        callback({
+            status: 502,
             message: `Problem with request: ${e.message}`
         });
     });
@@ -88,8 +88,16 @@ function formatLastSeenItems(items) {
 
 function register(app) {
     app.get('/api/stock/GetStock', (req, res) => {
-        fetchStocks(
-            (data) => {
+        fetchStocks((error, data) => {
+            if (error) {
+                res.status(error.status || 500).json({
+                    success: false,
+                    error: {
+                        code: error.status || 500,
+                        message: error.message
+                    }
+                });
+            } else {
                 try {
                     const formattedStocks = formatStocks(data);
                     res.status(200).json({
@@ -105,14 +113,8 @@ function register(app) {
                         }
                     });
                 }
-            },
-            (err) => {
-                res.status(err.code || 500).json({
-                    success: false,
-                    error: err
-                });
             }
-        );
+        });
     });
 }
 
