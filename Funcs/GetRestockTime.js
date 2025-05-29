@@ -30,7 +30,6 @@ function calculateRestockTimes() {
     return `${hours}h ago`;
   }
 
-  // Helper function to get last reset and next reset timestamps for an interval
   function getResetTimes(interval) {
     const timeSinceStartOfDay = now.getTime() - today.getTime();
     const lastReset = today.getTime() + Math.floor(timeSinceStartOfDay / interval) * interval;
