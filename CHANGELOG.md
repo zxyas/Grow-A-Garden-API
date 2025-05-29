@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.0
+### Added
+- Added Proper Error Codes for Weather & GetStock
+- Added success to Weather & GetStock
+
 ## v1.0
 
 ### Added / Changed
