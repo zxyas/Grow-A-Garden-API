@@ -4,7 +4,7 @@
 
   function calculateRestockTimes() {
     const now = new Date();
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timezone = 'America/New_York'; // Use Intl.DateTimeFormat().resolvedOptions().timeZone if you wanna use the Server Timezone
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     function formatTime(timestamp) {
@@ -15,6 +15,21 @@
         timeZone: timezone
       });
     }
+
+    function timeSince(timestamp) {
+      const now = Date.now();
+      const diff = now - timestamp; 
+      
+      const seconds = Math.floor(diff / 1000);
+      if (seconds < 60) return `${seconds}s ago`;
+      
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m ago`;
+      
+      const hours = Math.floor(minutes / 60);
+      return `${hours}h ago`;
+    }
+    
 
     const eggInterval = 30 * 60 * 1000;
     const eggRestockTimestamp = today.getTime() + Math.floor((now - today) / eggInterval) * eggInterval;
@@ -40,27 +55,32 @@
       egg: {
         timestamp: eggRestockTimestamp,
         countdown: eggCountdown,
-        LastRestock: formatTime(eggRestockTimestamp)
+        LastRestock: formatTime(eggRestockTimestamp),
+        timeSinceLastRestock: timeSince(eggRestockTimestamp)
       },
       gear: {
         timestamp: gearRestockTimestamp,
         countdown: gearCountdown,
-        LastRestock: formatTime(gearRestockTimestamp)
+        LastRestock: formatTime(gearRestockTimestamp),
+        timeSinceLastRestock: timeSince(gearRestockTimestamp)
       },
       seeds: {
         timestamp: gearRestockTimestamp,
         countdown: gearCountdown,
-        LastRestock: formatTime(gearRestockTimestamp)
+        LastRestock: formatTime(gearRestockTimestamp),
+        timeSinceLastRestock: timeSince(gearRestockTimestamp)
       },
       cosmetic: {
         timestamp: cosmeticRestockTimestamp,
         countdown: cosmeticCountdown,
-        LastRestock: formatTime(cosmeticRestockTimestamp)
+        LastRestock: formatTime(cosmeticRestockTimestamp),
+        timeSinceLastRestock: timeSince(cosmeticRestockTimestamp)
       },
       nightevent: {
         timestamp: nightRestockTimestamp,
         countdown: nightCountdown,
-        LastRestock: formatTime(nightRestockTimestamp)
+        LastRestock: formatTime(nightRestockTimestamp),
+        timeSinceLastRestock: timeSince(nightRestockTimestamp)
       }
     };
   }
