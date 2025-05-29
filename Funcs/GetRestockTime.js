@@ -1,79 +1,66 @@
-function pad(n) {
+  function pad(n) {
     return n < 10 ? '0' + n : n;
   }
-  
+
   function calculateRestockTimes() {
     const now = new Date();
-      const nextHalfHour = new Date(now);
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const minutes = now.getMinutes();
-    if (minutes < 30) {
-      nextHalfHour.setMinutes(30, 0, 0);
-    } else {
-      nextHalfHour.setHours(now.getHours() + 1);
-      nextHalfHour.setMinutes(0, 0, 0);
+    function formatTime(timestamp) {
+      return new Date(timestamp).toLocaleString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: timezone
+      });
     }
-  
-    const distEgg = nextHalfHour - now;
-    const hEgg = Math.floor(distEgg / 3.6e6);
-    const mEgg = Math.floor((distEgg % 3.6e6) / 6e4);
-    const sEgg = Math.floor((distEgg % 6e4) / 1000);
-    const eggCountdown = `${pad(hEgg)}h ${pad(mEgg)}m ${pad(sEgg)}s`;
-    const eggTimestamp = nextHalfHour.getTime();
-  
-    const next5 = new Date(now);
-    const nextM = Math.ceil((now.getMinutes() + (now.getSeconds() > 0 ? 1 : 0)) / 5) * 5;
-    if (nextM === 60) {
-      next5.setHours(next5.getHours() + 1);
-      next5.setMinutes(0, 0, 0);
-    } else {
-      next5.setMinutes(nextM, 0, 0);
-    }
-  
-    const dist5 = next5 - now;
-    const m5 = Math.floor(dist5 / 6e4);
-    const s5 = Math.floor((dist5 % 6e4) / 1000);
-    const gearAndSeedsCountdown = `${pad(m5)}m ${pad(s5)}s`;
-    const gearAndSeedsTimestamp = next5.getTime();
 
-    const RefreshTime = 14400;
-    const RefreshTime2 = 3600;
-    const nowSec = Math.ceil(Date.now() / 1000);
-    const remainingTime = RefreshTime - (nowSec % RefreshTime);
-    const hrs = Math.floor(remainingTime / 3600);
-    const mins = Math.floor((remainingTime % 3600) / 60);
-    const secs = remainingTime % 60;
-    const resetCountdown = `${pad(hrs)}h ${pad(mins)}m ${pad(secs)}s`;
-    const resetTimestamp = (nowSec + remainingTime) * 1000;
-    
-    const remainingTime2 = RefreshTime2 - (nowSec % RefreshTime2);
-    const hrs2 = Math.floor(remainingTime2 / 3600);
-    const mins2 = Math.floor((remainingTime2 % 3600) / 60);
-    const secs2 = remainingTime2 % 60;
-    const resetCountdown2 = `${pad(hrs2)}h ${pad(mins2)}m ${pad(secs2)}s`;
-    const resetTimestamp2 = (nowSec + remainingTime2) * 1000;
-    
-  
+    const eggInterval = 30 * 60 * 1000;
+    const eggRestockTimestamp = today.getTime() + Math.floor((now - today) / eggInterval) * eggInterval;
+    const eggCountdownMs = (eggRestockTimestamp + eggInterval) - now;
+    const eggCountdown = `${pad(Math.floor(eggCountdownMs / 3.6e6))}h ${pad(Math.floor((eggCountdownMs % 3.6e6) / 6e4))}m ${pad(Math.floor((eggCountdownMs % 6e4) / 1000))}s`;
+
+    const gearInterval = 5 * 60 * 1000;
+    const gearRestockTimestamp = today.getTime() + Math.floor((now - today) / gearInterval) * gearInterval;
+    const gearCountdownMs = (gearRestockTimestamp + gearInterval) - now;
+    const gearCountdown = `${pad(Math.floor(gearCountdownMs / 6e4))}m ${pad(Math.floor((gearCountdownMs % 6e4) / 1000))}s`;
+
+    const cosmeticInterval = 4 * 3600 * 1000;
+    const cosmeticRestockTimestamp = today.getTime() + Math.floor((now - today) / cosmeticInterval) * cosmeticInterval;
+    const cosmeticCountdownMs = (cosmeticRestockTimestamp + cosmeticInterval) - now;
+    const cosmeticCountdown = `${pad(Math.floor(cosmeticCountdownMs / 3.6e6))}h ${pad(Math.floor((cosmeticCountdownMs % 3.6e6) / 6e4))}m ${pad(Math.floor((cosmeticCountdownMs % 6e4) / 1000))}s`;
+
+    const nightInterval = 3600 * 1000;
+    const nightRestockTimestamp = today.getTime() + Math.floor((now - today) / nightInterval) * nightInterval;
+    const nightCountdownMs = (nightRestockTimestamp + nightInterval) - now;
+    const nightCountdown = `${pad(Math.floor(nightCountdownMs / 3.6e6))}h ${pad(Math.floor((nightCountdownMs % 3.6e6) / 6e4))}m ${pad(Math.floor((nightCountdownMs % 6e4) / 1000))}s`;
+
     return {
       egg: {
-        timestamp: eggTimestamp,
-        countdown: eggCountdown
+        timestamp: eggRestockTimestamp,
+        countdown: eggCountdown,
+        LastRestock: formatTime(eggRestockTimestamp)
       },
       gear: {
-        timestamp: gearAndSeedsTimestamp,
-        countdown: gearAndSeedsCountdown
+        timestamp: gearRestockTimestamp,
+        countdown: gearCountdown,
+        LastRestock: formatTime(gearRestockTimestamp)
       },
       seeds: {
-        timestamp: gearAndSeedsTimestamp,
-        countdown: gearAndSeedsCountdown
+        timestamp: gearRestockTimestamp,
+        countdown: gearCountdown,
+        LastRestock: formatTime(gearRestockTimestamp)
       },
       cosmetic: {
-        timestamp: resetTimestamp,
-        countdown: resetCountdown
+        timestamp: cosmeticRestockTimestamp,
+        countdown: cosmeticCountdown,
+        LastRestock: formatTime(cosmeticRestockTimestamp)
       },
       nightevent: {
-        timestamp: resetTimestamp2,
-        countdown: resetCountdown2
+        timestamp: nightRestockTimestamp,
+        countdown: nightCountdown,
+        LastRestock: formatTime(nightRestockTimestamp)
       }
     };
   }
