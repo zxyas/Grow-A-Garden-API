@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.1
+### Fixed GetStock
+- Removed Old Method of Getting Stocks 
+- Stoled Some other guy Api 🤑
+
 ## v1.1.0
 ### Added
 - Added Proper Error Codes for Weather & GetStock
