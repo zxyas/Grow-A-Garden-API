@@ -82,7 +82,7 @@ function calculateRestockTimes() {
       LastRestock: formatTime(cosmeticLastReset),
       timeSinceLastRestock: timeSince(cosmeticLastReset)
     },
-    nightevent: {
+    SwarmEvent: {
       timestamp: nightNextReset,
       countdown: nightCountdown,
       LastRestock: formatTime(nightLastReset),
