@@ -39,26 +39,27 @@ function fetchStocks(callback) {
 }
 
 function formatStocks(data) {
-    const stocks = data[0].result.data.json;
+    const stocks = data[0]?.result?.data?.json || {};
 
     const formattedOutput = {
-        gearStock: formatStockItems(stocks.gearStock),
-        eggStock: formatStockItems(stocks.eggStock),
-        seedsStock: formatStockItems(stocks.seedsStock),
-        cosmeticsStock: formatStockItems(stocks.cosmeticsStock),
-        honeyStock: formatStockItems(stocks.honeyStock),
-        nightStock: formatStockItems(stocks.nightStock),
+        gearStock: formatStockItems(stocks.gearStock || []),
+        eggStock: formatStockItems(stocks.eggStock || []),
+        seedsStock: formatStockItems(stocks.seedsStock || []),
+        cosmeticsStock: formatStockItems(stocks.cosmeticsStock || []),
+        honeyStock: formatStockItems(stocks.honeyStock || []),
+        nightStock: formatStockItems(stocks.nightStock || []),
 
         lastSeen: {
-            Seeds: formatLastSeenItems(stocks.lastSeen.Seeds),
-            Gears: formatLastSeenItems(stocks.lastSeen.Gears),
-            Weather: formatLastSeenItems(stocks.lastSeen.Weather),
-            Eggs: formatLastSeenItems(stocks.lastSeen.Eggs)
+            Seeds: formatLastSeenItems(stocks.lastSeen?.Seeds || []),
+            Gears: formatLastSeenItems(stocks.lastSeen?.Gears || []),
+            Weather: formatLastSeenItems(stocks.lastSeen?.Weather || []),
+            Eggs: formatLastSeenItems(stocks.lastSeen?.Eggs || [])
         }
     };
 
     return formattedOutput;
 }
+
 
 function formatStockItems(items) {
     return items.map(item => ({
