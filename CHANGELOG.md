@@ -1,4 +1,7 @@
 # Changelog
+## v1.1.2
+### Added Hash Check
+- This Will Prevent Too much Traffic from senting a lot of request to vulcan api
 
 ## v1.1.1
 ### Fixed GetStock
