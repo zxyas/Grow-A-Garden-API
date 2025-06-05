@@ -1,4 +1,5 @@
 const https = require("https");
+const crypto = require("crypto");
 
 const options = {
     method: "GET",
@@ -16,32 +17,40 @@ const options = {
     }
 };
 
-function fetchStocks(callback) {
-    const req = https.request(options, (res) => {
-        const chunks = [];
+let LastSeedStockHash = null;
+let cachedStockData = null;
 
-        res.on("data", (chunk) => {
-            chunks.push(chunk);
+function fetchStocks() {
+    return new Promise((resolve, reject) => {
+        const req = https.request(options, (res) => {
+            const chunks = [];
+            res.on("data", (chunk) => {
+                chunks.push(chunk);
+            });
+
+            res.on("end", () => {
+                try {
+                    const body = Buffer.concat(chunks);
+                    const parsedData = JSON.parse(body.toString());
+                    resolve(parsedData);
+                } catch (err) {
+                    reject(err);
+                }
+            });
         });
 
-        res.on("end", () => {
-            const body = Buffer.concat(chunks);
-            const parsedData = JSON.parse(body.toString());
-            callback(parsedData);
+        req.on("error", (e) => {
+            reject(e);
         });
-    });
 
-    req.on("error", (e) => {
-        console.error(`Problem with request: ${e.message}`);
+        req.end();
     });
-
-    req.end();
 }
 
 function formatStocks(data) {
     const stocks = data[0]?.result?.data?.json || {};
 
-    const formattedOutput = {
+    return {
         gearStock: formatStockItems(stocks.gearStock || []),
         eggStock: formatStockItems(stocks.eggStock || []),
         seedsStock: formatStockItems(stocks.seedsStock || []),
@@ -56,10 +65,7 @@ function formatStocks(data) {
             Eggs: formatLastSeenItems(stocks.lastSeen?.Eggs || [])
         }
     };
-
-    return formattedOutput;
 }
-
 
 function formatStockItems(items) {
     return items.map(item => ({
@@ -79,13 +85,51 @@ function formatLastSeenItems(items) {
     }));
 }
 
+async function FetchStockData() {
+    try {
+        const data = await fetchStocks();
+        return formatStocks(data);
+    } catch (err) {
+        console.error("Error fetching stock data:", err);
+        return null;
+    }
+}
+
+async function CheckAndSendStock(SendStock) {
+    const stockData = await FetchStockData();
+    if (!stockData || Object.keys(stockData).length === 0) return;
+
+    const stockString = JSON.stringify(stockData);
+    const currentHash = crypto.createHash('md5').update(stockString).digest('hex');
+
+    if (LastSeedStockHash !== currentHash) {
+        LastSeedStockHash = currentHash;
+        cachedStockData = stockData;
+        await SendStock(stockData);
+    }
+}
+
 function register(app) {
-    app.get('/api/stock/GetStock', (req, res) => {
-        fetchStocks((data) => {
-            const formattedStocks = formatStocks(data);
-            res.json(formattedStocks);
-        });
+    app.get('/api/stock/GetStock', async (req, res) => {
+        if (cachedStockData) {
+            res.json(cachedStockData);
+            return;
+        }
+
+        try {
+            const stockData = await FetchStockData();
+            if (!stockData) {
+                res.status(500).json({ error: "Failed to fetch stock data" });
+                return;
+            }
+            const stockString = JSON.stringify(stockData);
+            LastSeedStockHash = crypto.createHash('md5').update(stockString).digest('hex');
+            cachedStockData = stockData;
+            res.json(stockData);
+        } catch (err) {
+            res.status(500).json({ error: "Error fetching stock data" });
+        }
     });
 }
 
-module.exports = { register };
+module.exports = { register, CheckAndSendStock };
