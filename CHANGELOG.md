@@ -1,4 +1,8 @@
 # Changelog
+## v1.1.3
+### Added Back Weather
+- Yippe :D
+
 ## v1.1.2
 ### Added Hash Check
 - This Will Prevent Too much Traffic from senting a lot of request to vulcan api
