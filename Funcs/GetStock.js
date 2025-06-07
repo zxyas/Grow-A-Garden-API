@@ -1,5 +1,4 @@
 const https = require("https");
-const crypto = require("crypto");
 
 const options = {
     method: "GET",
@@ -16,9 +15,6 @@ const options = {
         "x-trpc-source": "gag"
     }
 };
-
-let LastSeedStockHash = null;
-let cachedStockData = null;
 
 function fetchStocks() {
     return new Promise((resolve, reject) => {
@@ -95,36 +91,14 @@ async function FetchStockData() {
     }
 }
 
-async function CheckAndSendStock(SendStock) {
-    const stockData = await FetchStockData();
-    if (!stockData || Object.keys(stockData).length === 0) return;
-
-    const stockString = JSON.stringify(stockData);
-    const currentHash = crypto.createHash('md5').update(stockString).digest('hex');
-
-    if (LastSeedStockHash !== currentHash) {
-        LastSeedStockHash = currentHash;
-        cachedStockData = stockData;
-        await SendStock(stockData);
-    }
-}
-
 function register(app) {
     app.get('/api/stock/GetStock', async (req, res) => {
-        if (cachedStockData) {
-            res.json(cachedStockData);
-            return;
-        }
-
         try {
             const stockData = await FetchStockData();
             if (!stockData) {
                 res.status(500).json({ error: "Failed to fetch stock data" });
                 return;
             }
-            const stockString = JSON.stringify(stockData);
-            LastSeedStockHash = crypto.createHash('md5').update(stockString).digest('hex');
-            cachedStockData = stockData;
             res.json(stockData);
         } catch (err) {
             res.status(500).json({ error: "Error fetching stock data" });
@@ -132,4 +106,4 @@ function register(app) {
     });
 }
 
-module.exports = { register, CheckAndSendStock };
+module.exports = { register };
