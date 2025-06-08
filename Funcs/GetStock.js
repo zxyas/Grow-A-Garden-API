@@ -1,109 +1,96 @@
 const https = require("https");
 
 const options = {
-    method: "GET",
-    hostname: "growagarden.gg",
-    port: null,
-    path: "/api/ws/stocks.getAll?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%7D%7D%7D",
-    headers: {
-        accept: "*/*",
-        "accept-language": "en-US,en;q=0.9",
-        "content-type": "application/json",
-        priority: "u=1, i",
-        referer: "https://growagarden.gg/stocks",
-        "trpc-accept": "application/json",
-        "x-trpc-source": "gag"
-    }
+  method: "GET",
+  hostname: "growagarden.gg",
+  path: "/stocks?_rsc=14g5d",
+  headers: {
+    accept: "*/*",
+    "accept-language": "en-US,en;q=0.9",
+    "next-router-state-tree":
+      "%5B%22%22%2C%7B%22children%22%3A%5B%22stocks%22%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2C%22%2Fstocks%22%2C%22refresh%22%5D%7D%5D%7D%2Cnull%2C%22refetch%22%5D",
+    priority: "u=1, i",
+    referer: "https://growagarden.gg/stocks",
+    rsc: "1",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "user-agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 OPR/119.0.0.0",
+    "Content-Length": "0",
+  },
 };
 
-function fetchStocks() {
-    return new Promise((resolve, reject) => {
-        const req = https.request(options, (res) => {
-            const chunks = [];
-            res.on("data", (chunk) => {
-                chunks.push(chunk);
-            });
+function extractJSONFromText(text, key) {
+  const keyPos = text.indexOf(`"${key}"`);
+  if (keyPos === -1) return null;
 
-            res.on("end", () => {
-                try {
-                    const body = Buffer.concat(chunks);
-                    const parsedData = JSON.parse(body.toString());
-                    resolve(parsedData);
-                } catch (err) {
-                    reject(err);
-                }
-            });
-        });
+  const colonPos = text.indexOf(":", keyPos);
+  if (colonPos === -1) return null;
 
-        req.on("error", (e) => {
-            reject(e);
-        });
+  const startPos = text.indexOf("{", colonPos);
+  if (startPos === -1) return null;
 
-        req.end();
-    });
-}
+  let bracketCount = 0;
+  let endPos = startPos;
 
-function formatStocks(data) {
-    const stocks = data[0]?.result?.data?.json || {};
+  for (let i = startPos; i < text.length; i++) {
+    if (text[i] === "{") bracketCount++;
+    else if (text[i] === "}") bracketCount--;
 
-    return {
-        gearStock: formatStockItems(stocks.gearStock || []),
-        eggStock: formatStockItems(stocks.eggStock || []),
-        seedsStock: formatStockItems(stocks.seedsStock || []),
-        cosmeticsStock: formatStockItems(stocks.cosmeticsStock || []),
-        honeyStock: formatStockItems(stocks.honeyStock || []),
-        nightStock: formatStockItems(stocks.nightStock || []),
-
-        lastSeen: {
-            Seeds: formatLastSeenItems(stocks.lastSeen?.Seeds || []),
-            Gears: formatLastSeenItems(stocks.lastSeen?.Gears || []),
-            Weather: formatLastSeenItems(stocks.lastSeen?.Weather || []),
-            Eggs: formatLastSeenItems(stocks.lastSeen?.Eggs || [])
-        }
-    };
-}
-
-function formatStockItems(items) {
-    return items.map(item => ({
-        name: item.name,
-        value: item.value,
-        image: item.image,
-        emoji: item.emoji
-    }));
-}
-
-function formatLastSeenItems(items) {
-    return items.map(item => ({
-        name: item.name,
-        image: item.image,
-        emoji: item.emoji,
-        seen: new Date(item.seen).toLocaleString()
-    }));
-}
-
-async function FetchStockData() {
-    try {
-        const data = await fetchStocks();
-        return formatStocks(data);
-    } catch (err) {
-        console.error("Error fetching stock data:", err);
-        return null;
+    if (bracketCount === 0) {
+      endPos = i;
+      break;
     }
+  }
+
+  if (bracketCount !== 0) return null;
+
+  return text.slice(startPos, endPos + 1);
+}
+
+function fetchStockData() {
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = "";
+
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      res.on("end", () => {
+        const jsonString = extractJSONFromText(data, "stockDataSSR");
+
+        if (!jsonString) {
+          return reject(new Error("stockDataSSR not found"));
+        }
+
+        try {
+          const stockDataSSR = JSON.parse(jsonString);
+          resolve(stockDataSSR);
+        } catch (e) {
+          reject(new Error("Failed to parse extracted JSON: " + e.message));
+        }
+      });
+    });
+
+    req.on("error", (e) => {
+      reject(e);
+    });
+
+    req.end();
+  });
 }
 
 function register(app) {
-    app.get('/api/stock/GetStock', async (req, res) => {
-        try {
-            const stockData = await FetchStockData();
-            if (!stockData) {
-                res.status(500).json({ error: "Failed to fetch stock data" });
-                return;
-            }
-            res.json(stockData);
-        } catch (err) {
-            res.status(500).json({ error: "Error fetching stock data" });
-        }
-    });
+  app.get("/api/stock/GetStock", async (req, res) => {
+    try {
+      const data = await fetchStockData();
+      res.json(data);
+    } catch (err) {
+      res.status(500).json({ error: err.message || "Failed to fetch stock data" });
+    }
+  });
 }
 
 module.exports = { register };
