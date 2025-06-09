@@ -1,7 +1,7 @@
 # Changelog
 ## v1.1.4
 ### Fixed Vulcan API issue :D
-- Nice Try Vulcan but if you want to contact me my username is | ijuew
+- Nice Try Vulcan but if you want to contact me my username is | ijuew | on Discord
 ## v1.1.3
 ### Added Back Weather
 - Yippe :D
