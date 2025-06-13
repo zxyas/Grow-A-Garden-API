@@ -18,6 +18,8 @@ function register(app) {
     try {
       tool.Weight = { value: parseFloat(tool.Weight) };
 
+      tool.Variant = { value: tool.Variant || 'Normal' };
+
       if (tool.Mutation) {
         tool.attributes = tool.Mutation.split(',').map(m => m.trim());
       } else {
