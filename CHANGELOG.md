@@ -1,4 +1,8 @@
 # Changelog
+## v1.1.5 
+### Added
+- Calculate Plant Value Module
+
 ## v1.1.4
 ### Fixed Vulcan API issue :D
 - Nice Try Vulcan but if you want to contact me my username is | ijuew | on Discord
