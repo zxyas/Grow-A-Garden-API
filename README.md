@@ -21,6 +21,7 @@ Don't Worry i've decided to use Vercel to host this api so u don't have to here 
 - https://growagardenapi.vercel.app/api/GetWeather
 - https://growagardenapi.vercel.app/api/Item-Info
 - https://growagardenapi.vercel.app/api/stock/Restock-Time
+- https://growagardenapi.vercel.app/api/CalculatePrice?Name=Carrot&Weight=.25&Variant=Rainbow&Mutation=Moonlit,Bloodlit,Disco
 
 # ⚙️ Installation
 
