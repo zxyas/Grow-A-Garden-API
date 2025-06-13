@@ -42,6 +42,6 @@ node server.js
 This will launch the API server and make it ready to handle requests.
 
 # 📋 Upcoming Features
-- ~~ Calculator that calculate plant value with the weight and mutations ~~
+- ~~Calculator that calculate plant value with the weight and mutations~~
 - Host Bot | This can allow you to host an actual bot to afk and collect the Data
 - Other random features to be discovered by my brain 
