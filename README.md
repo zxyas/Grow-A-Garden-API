@@ -1,6 +1,7 @@
 # 👋🏻 Introduction
 
 ### If you like this pls give me a star 🙏
+### i Recomand hosting your self since there is multiple people using vercel which makes it slower so uh yeah pls host it ur self it will be more faster
 ### [CHANGELOGS](https://github.com/Just3itx/Grow-A-Garden-API/blob/main/CHANGELOG.md)
 
 
