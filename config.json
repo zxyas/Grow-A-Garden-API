@@ -1,6 +1,7 @@
 {
   "IPWhitelist": false,
-  "WhitelistedIPs": ["::1"],
-  "Port": 1000,
-  "Dashboard": true
+  "WhitelistedIPs": [],
+  "Dashboard": true,
+  "Port": 3000,
+  "UseGithubMutationData": true
 }
