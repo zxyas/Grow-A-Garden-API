@@ -1,63 +1,111 @@
-const ListCalculator = {};
+const fs = require('fs');
+const https = require('https');
+const path = require('path');
 
-const { ItemData, Rarity, Mutations } = require('./FruitDatabase.js');
+const localPath = path.resolve(__dirname, './FruitDatabase.js');
+const githubURL = 'https://raw.githubusercontent.com/Just3itx/Grow-A-Garden-API/refs/heads/main/Funcs/Calc/FruitDatabase.js';
 
-ListCalculator.deepCopy = function (obj) {
-  return JSON.parse(JSON.stringify(obj));
-};
+let ItemData = [];
+let Rarity = [];
+let Mutations = {};
 
-ListCalculator.stripFlavourText = function (str) {
-  if (str && str !== "") {
-    return str.replace(/\[.*?\]/g, "").trim();
+function downloadFile(url, dest) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(dest);
+    https.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        reject(new Error(`Failed to download ${url}, status code: ${res.statusCode}`));
+        res.resume();
+        return;
+      }
+      res.pipe(file);
+      file.on('finish', () => {
+        file.close(resolve);
+      });
+    }).on('error', err => {
+      fs.unlink(dest, () => reject(err));
+    });
+  });
+}
+
+async function loadFruitDatabase() {
+  try {
+    await downloadFile(githubURL, localPath);
+  } catch (err) {
+    throw new Error(`Failed to download FruitDatabase.js: ${err.message}`);
   }
-  return null;
-};
 
-ListCalculator.getFruitData = function (str) {
-  const stripped = ListCalculator.stripFlavourText(str);
-  return ItemData.find(item => item[0] === stripped) || null;
-};
+  delete require.cache[require.resolve(localPath)];
 
-ListCalculator.getMutations = function () {
-  return ListCalculator.deepCopy(Mutations);
-};
+  const mod = require(localPath);
+  ItemData = mod.ItemData;
+  Rarity = mod.Rarity;
+  Mutations = mod.Mutations;
+}
 
-ListCalculator.calculateMutation = function (tool) {
-  let count = 1;
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
 
-  for (const [key, mutation] of Object.entries(ListCalculator.getMutations())) {
-    if (tool.attributes && Array.isArray(tool.attributes) && tool.attributes.includes(key)) {
-      count += (mutation.ValueMulti - 1);
+function getFruitData(name) {
+  return ItemData.find(item => item[0] === name) || null;
+}
+
+function calculateVariant(variantName) {
+  const variant = Rarity.find(v => v[0] === variantName);
+  return variant ? variant[2] : 1;
+}
+
+function calculateMutation(tool) {
+  if (!tool.attributes || !Array.isArray(tool.attributes)) return 1;
+
+  let mutationCount = 1;
+  for (const attr of tool.attributes) {
+    const mutation = Mutations[attr];
+    if (mutation && typeof mutation.ValueMulti === 'number') {
+      mutationCount += (mutation.ValueMulti - 1);
     }
   }
+  return mutationCount;
+}
 
-  return Math.max(1, count);
-};
+function calculateFruit(tool) {
+  if (!tool || typeof tool.Name !== 'string') {
+    console.warn("Invalid tool or missing Name.");
+    return 0;
+  }
 
-ListCalculator.calculateVariant = function (name) {
-  const variant = Rarity.find(v => v[0] === name);
-  return variant ? variant[2] : 0;
-};
+  const itemData = getFruitData(tool.Name);
+  if (!itemData || itemData.length < 3) {
+    console.warn(`No item data found for fruit: ${tool.Name}`);
+    return 0;
+  }
 
-ListCalculator.calculateFruit = function (tool) {
-  const itemName = tool.Name || tool.Item_String?.value || tool.name;
-  const variant = tool.Variant?.value || "Normal";
-  const weight = tool.Weight?.value;
+  if (typeof tool.Weight !== 'object' || typeof tool.Weight.value !== 'number') {
+    console.warn("Missing or invalid weight for the tool.");
+    return 0;
+  }
 
-  if (weight == null) return 0;
+  const baseValue = itemData[2];
+  const weightDivisor = itemData[1];
+  const variantMultiplier = calculateVariant(tool.Variant?.value || "Normal");
+  const mutationValue = calculateMutation(tool);
 
-  const data = ListCalculator.getFruitData(itemName);
-  if (!data || data.length < 3) return 0;
+  const weightRatio = tool.Weight.value / weightDivisor;
+  const clampedRatio = clamp(weightRatio, 0.95, 1e8);
+  const finalValue = baseValue * mutationValue * variantMultiplier * (clampedRatio * clampedRatio);
 
-  const base = data[2];
-  const weightRef = data[1];
-  const variantMultiplier = ListCalculator.calculateVariant(variant);
-  const mutationMultiplier = ListCalculator.calculateMutation(tool);
+  return Math.round(finalValue);
+}
 
-  const scaled = base * mutationMultiplier * variantMultiplier;
-  const ratio = weightRef > 0 ? Math.max(0.95, weight / weightRef) : 1;
+(async () => {
+  try {
+    await loadFruitDatabase();
+    console.log(`Loaded FruitDatabase with ${ItemData.length} items.`);
+  } catch (e) {
+    console.error('Error loading FruitDatabase:', e);
+    process.exit(1);
+  }
+})();
 
-  return Math.round(scaled * ratio * ratio);
-};
-
-module.exports = ListCalculator;
+module.exports = { calculateFruit };
