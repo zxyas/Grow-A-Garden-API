@@ -3,9 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const blessed = require('blessed');
+const cors = require('cors');
 
 const configPath = path.join(__dirname, 'config.json');
-let config = { IPWhitelist: false, WhitelistedIPs: [], Dashboard: true, Port: 3000 };
+let config = { IPWhitelist: false, WhitelistedIPs: [], Dashboard: true, Port: 3000, UseGithubMutationData: true };
 
 if (fs.existsSync(configPath)) {
   config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -16,6 +17,8 @@ if (fs.existsSync(configPath)) {
 
 const app = express();
 const PORT = config.Port || 3000;
+
+app.use(cors());
 
 let screen, settingsBox, perfBox, activityBox, consoleBox;
 
@@ -84,10 +87,31 @@ if (config.Dashboard) {
 const activityLog = [];
 
 const originalConsoleLog = console.log;
+function formatLogEntry(timestamp, method, path, ip, useColors = true) {
+  if (!useColors) {
+    return `[${timestamp}] ${method} ${path} - ${ip}`;
+  }
+
+  const colors = {
+    reset: "\x1b[0m",
+    timestamp: "\x1b[38;5;15m",
+    method: "\x1b[32m",
+    path: "\x1b[33m",
+    ip: "\x1b[36m"
+  };
+
+  return `${colors.timestamp}[${timestamp}]${colors.reset} ` +
+         `${colors.method}${method}${colors.reset} ` +
+         `${colors.path}${path}${colors.reset} - ` +
+         `${colors.ip}${ip}${colors.reset}`;
+}
+
 console.log = function (...args) {
   const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
   if (config.Dashboard) {
-    consoleBox.insertBottom(message);
+    const timestamp = new Date().toISOString();
+    const logEntry = formatLogEntry(timestamp, 'LOG', message, '', true);
+    consoleBox.insertBottom(logEntry);
     consoleBox.setScrollPerc(100);
     screen.render();
   } else {
@@ -95,19 +119,21 @@ console.log = function (...args) {
   }
 };
 
-const originalConsoleError = console.error;
 
+const originalConsoleError = console.error;
 console.error = function (...args) {
   const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
-  originalConsoleError.apply(console, args);
   if (config.Dashboard) {
-    consoleBox.insertBottom(`[ERROR] ${message}`);
+    const timestamp = new Date().toISOString();
+    const logEntry = formatLogEntry(timestamp, 'ERROR', message, '', true);
+    consoleBox.insertBottom(logEntry);
     consoleBox.setScrollPerc(100);
     screen.render();
   } else {
     originalConsoleError.apply(console, args);
   }
 };
+
 
 function formatIP(ip) {
   if (typeof ip !== 'string') return ip;
@@ -187,25 +213,12 @@ if (config.IPWhitelist) {
   logConsole(`IP Whitelisting DISABLED.`);
 }
 
-const colors = {
-  reset: "\x1b[0m",
-  timestamp: "\x1b[38;5;15m", // Blue
-  method: "\x1b[32m",    // Green
-  path: "\x1b[33m",      // Yellow
-  ip: "\x1b[36m",        // Cyan
-  error: "\x1b[31m"      // Red
-};
-
-function formatLogEntry(timestamp, method, path, ip) {
-  return `${colors.timestamp}[${timestamp}]${colors.reset} ${colors.method}${method}${colors.reset} ${colors.path}${path}${colors.reset} - ${colors.ip}${ip}${colors.reset}`;
-}
-
 app.use((req, res, next) => {
   const rawIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
   const ip = rawIp.includes('::ffff:') ? rawIp.split('::ffff:')[1] : rawIp;
   const timestamp = new Date().toISOString();
 
-  const logEntry = formatLogEntry(timestamp, req.method, req.originalUrl, formatIP(ip));
+  const logEntry = formatLogEntry(timestamp, req.method, req.originalUrl, formatIP(ip), !config.Dashboard);
   activityLog.push(logEntry);
 
   if (config.IPWhitelist && !config.WhitelistedIPs.includes(ip)) {
@@ -218,7 +231,6 @@ app.use((req, res, next) => {
   updateUI();
   next();
 });
-
 
 app.get('/status', (req, res) => {
   res.json({
