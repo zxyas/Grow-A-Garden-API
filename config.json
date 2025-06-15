@@ -3,5 +3,4 @@
   "WhitelistedIPs": [],
   "Dashboard": true,
   "Port": 3000,
-  "UseGithubMutationData": true
 }
