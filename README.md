@@ -2,8 +2,8 @@
 
 ### If you like this pls give me a star 🙏
 ### i Recomand hosting your self since there is multiple people using vercel which makes it slower so uh yeah pls host it ur self it will be more faster
+### im planing to Make a premium one which will update realtime no delays and reliable but this will require 5 dollar for lifetime to Maintain the Hosting
 ### [CHANGELOGS](https://github.com/Just3itx/Grow-A-Garden-API/blob/main/CHANGELOG.md)
-
 
 Welcome to the **Grow a Garden API**. This open-source API provides a straightforward way to access in-game gardening data—including stock levels, weather conditions, and item information—without the need to host or maintain bots yourself.
 
