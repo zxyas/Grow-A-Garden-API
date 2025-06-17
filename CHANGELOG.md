@@ -1,4 +1,8 @@
 # Changelog
+## v1.1.6
+### Changed
+- Made a temp fix to /stock/getstock
+  
 ## v1.1.5 
 ### Added
 - Calculate Plant Value Module
