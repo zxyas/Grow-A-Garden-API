@@ -3,7 +3,7 @@
 ### If you like this pls give me a star 🙏
 ### i Recomand hosting your self since there is multiple people using vercel which makes it slower so uh yeah pls host it ur self it will be more faster
 
-## Premium API Costs: 5 Dollar with Real-Time Update With Weather and Stock For now more coming soon adding | DM/Add ijuew on Discord to Purchase 
+## Premium API Costs: 5 Dollar with Real-Time Update With Weather and Stock For now more coming soon adding | Join this Discord Server to Purchase https://discord.gg/bf7MFhYpXb
 
 ### [CHANGELOGS](https://github.com/Just3itx/Grow-A-Garden-API/blob/main/CHANGELOG.md)
 
@@ -20,12 +20,7 @@ features include:
 
 # 💿Too Lazy to host your self?
 Don't Worry i've decided to use Vercel to host this api so u don't have to here is the url
-- https://growagardenapi.vercel.app/api/stock/GetStock
-- https://growagardenapi.vercel.app/api/GetWeather
-- https://growagardenapi.vercel.app/api/Item-Info
-- https://growagardenapi.vercel.app/api/stock/Restock-Time
-- https://growagardenapi.vercel.app/api/CalculatePrice?Name=Carrot&Weight=.25&Variant=Rainbow&Mutation=Moonlit,Bloodlit,Disco
-
+- ATM Vercel Decided to Pause The API so ill be looking for a new Host to host it the API Public
 # ⚙️ Installation
 
 To get started with the Grow a Garden API, you’ll need to have Node.js installed. After that, you can set up the API with the following dependencies:
