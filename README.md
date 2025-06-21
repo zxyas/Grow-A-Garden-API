@@ -31,7 +31,7 @@ Don't Worry i've decided to use Vercel to host this api so u don't have to here 
 To get started with the Grow a Garden API, you’ll need to have Node.js installed. After that, you can set up the API with the following dependencies:
 
 ```bash
-npm install express fs path os blessed
+npm install express fs path os blessed cors
 ```
 
 # 💻 Running the Server
@@ -39,7 +39,7 @@ npm install express fs path os blessed
 Once your setup is complete, you can start the server by running:
 
 ```bash
-node server.js
+node Server.js
 ```
 
 This will launch the API server and make it ready to handle requests.
