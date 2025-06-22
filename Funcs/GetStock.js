@@ -97,7 +97,6 @@ function formatStocks(stocks) {
 async function FetchStockData() {
     try {
         const data = await fetchStocks();
-        console.log("Raw stock data from API:", JSON.stringify(data, null, 2));
         return formatStocks(data);
     } catch (err) {
         console.error("Error fetching stock data:", err);
