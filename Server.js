@@ -6,7 +6,7 @@ const blessed = require('blessed');
 const cors = require('cors');
 
 const configPath = path.join(__dirname, 'config.json');
-let config = { IPWhitelist: false, WhitelistedIPs: [], Dashboard: true, Port: 3000 };
+let config = { IPWhitelist: false, WhitelistedIPs: [], Dashboard: true, Port: 3000, UseGithubMutationData: true };
 
 if (fs.existsSync(configPath)) {
   config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -214,7 +214,16 @@ if (config.IPWhitelist) {
 }
 
 app.use((req, res, next) => {
-  const rawIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
+  let rawIp;
+
+  if (config.IPWhitelist) {
+    rawIp = req.connection.remoteAddress || '';
+  } else {
+    rawIp = req.headers['x-forwarded-for'] ||
+            req.headers['x-real-ip'] ||
+            req.connection.remoteAddress || '';
+  }
+
   const ip = rawIp.includes('::ffff:') ? rawIp.split('::ffff:')[1] : rawIp;
   const timestamp = new Date().toISOString();
 
@@ -231,6 +240,7 @@ app.use((req, res, next) => {
   updateUI();
   next();
 });
+
 
 app.get('/status', (req, res) => {
   res.json({
