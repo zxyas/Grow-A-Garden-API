@@ -1,81 +1,123 @@
 const https = require("https");
 
-function createOptions(path) {
-  return {
+const options = {
     method: "GET",
-    hostname: "growagardenstock.com",
-    path: path,
+    hostname: "growagarden.gg",
+    port: null,
+    path: "/api/stock",
     headers: {
-      accept: "*/*",
-      "accept-language": "en-US,en;q=0.9",
-      referer: "https://growagardenstock.com/api/stock",
-      "user-agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 OPR/119.0.0.0",
-    },
-  };
+        accept: "*/*",
+        "accept-language": "en-US,en;q=0.9",
+        "content-type": "application/json",
+        priority: "u=1, i",
+        referer: "https://growagarden.gg/stocks",
+        "trpc-accept": "application/json",
+        "x-trpc-source": "gag"
+    }
+};
+
+function fetchStocks() {
+    return new Promise((resolve, reject) => {
+        const req = https.request(options, (res) => {
+            const chunks = [];
+            res.on("data", (chunk) => {
+                chunks.push(chunk);
+            });
+
+            res.on("end", () => {
+                try {
+                    const body = Buffer.concat(chunks);
+                    const parsedData = JSON.parse(body.toString());
+                    resolve(parsedData);
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        });
+
+        req.on("error", (e) => {
+            reject(e);
+        });
+
+        req.end();
+    });
 }
 
-function fetchStockData(path) {
-  return new Promise((resolve, reject) => {
-    const options = createOptions(path);
-    const req = https.request(options, (res) => {
-      let data = "";
+function formatStockItems(items, imageData) {
+    if (!Array.isArray(items) || items.length === 0) return [];
 
-      res.on("data", (chunk) => {
-        data += chunk;
-      });
-
-      res.on("end", () => {
-        try {
-          const parsed = JSON.parse(data);
-          resolve(parsed);
-        } catch (e) {
-          reject(new Error("Failed to parse JSON: " + e.message));
-        }
-      });
+    return items.map(item => {
+        const image = imageData?.[item.name] || null;
+        return {
+            name: item?.name || "Unknown Item",
+            value: item?.value ?? null,
+            ...(image && { image })
+        };
     });
-
-    req.on("error", (e) => {
-      reject(e);
-    });
-
-    req.end();
-  });
 }
 
-function extractCounts(items) {
-  return items.map(item => {
-    const match = item.match(/\*\*x(\d+)\*\*/);
-    const stock = match ? match[1] : "0";
-    const name = item.replace(/\s*\*\*x\d+\*\*$/, "").trim();
-    return { name, stock };
-  });
+function formatLastSeenItems(items, imageData) {
+    if (!Array.isArray(items) || items.length === 0) return [];
+
+    return items.map(item => {
+        const image = imageData?.[item.name] || null;
+        return {
+            name: item?.name || "Unknown",
+            emoji: item?.emoji || "❓",
+            seen: item?.seen ?? null,
+            ...(image && { image })
+        };
+    });
+}
+
+function formatStocks(stocks) {
+    const imageData = stocks.imageData || {};
+
+    return {
+        easterStock: formatStockItems(stocks.easterStock, imageData),
+        gearStock: formatStockItems(stocks.gearStock, imageData),
+        eggStock: formatStockItems(stocks.eggStock, imageData),
+        nightStock: formatStockItems(stocks.nightStock, imageData),
+        honeyStock: formatStockItems(stocks.honeyStock, imageData),
+        cosmeticsStock: formatStockItems(stocks.cosmeticsStock, imageData),
+        seedsStock: formatStockItems(stocks.seedsStock, imageData),
+
+        lastSeen: {
+            Seeds: formatLastSeenItems(stocks.lastSeen?.Seeds, imageData),
+            Gears: formatLastSeenItems(stocks.lastSeen?.Gears, imageData),
+            Weather: formatLastSeenItems(stocks.lastSeen?.Weather, imageData),
+            Eggs: formatLastSeenItems(stocks.lastSeen?.Eggs, imageData),
+            Honey: formatLastSeenItems(stocks.lastSeen?.Honey, imageData)
+        },
+
+        restockTimers: stocks.restockTimers || {},
+    };
+}
+
+async function FetchStockData() {
+    try {
+        const data = await fetchStocks();
+        console.log("Raw stock data from API:", JSON.stringify(data, null, 2));
+        return formatStocks(data);
+    } catch (err) {
+        console.error("Error fetching stock data:", err);
+        return null;
+    }
 }
 
 function register(app) {
-  app.get("/api/stock/GetStock", async (req, res) => {
-    try {
-      const [mainStock, specialStock] = await Promise.all([
-        fetchStockData("/api/stock"),
-        fetchStockData("/api/special-stock")
-      ]);
-
-      const formattedData = {
-        Data: {
-          updatedAt: mainStock.updatedAt || Date.now(),
-          gear: extractCounts(mainStock.gear || []),
-          seeds: extractCounts(mainStock.seeds || []),
-          egg: extractCounts(mainStock.egg || []),
-          honey: extractCounts(specialStock.honey || []),
-          cosmetics: extractCounts(specialStock.cosmetics || []),
-        },
-      };
-
-      res.json(formattedData);
-    } catch (err) {
-      res.status(500).json({ error: err.message || "Failed to fetch stock data" });
-    }
-  });
+    app.get('/api/stock/GetStock', async (req, res) => {
+        try {
+            const stockData = await FetchStockData();
+            if (!stockData) {
+                res.status(500).json({ error: "Failed to fetch stock data" });
+                return;
+            }
+            res.json(stockData);
+        } catch (err) {
+            res.status(500).json({ error: "Error fetching stock data" });
+        }
+    });
 }
 
 module.exports = { register };
