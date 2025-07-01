@@ -57,6 +57,12 @@ function calculateRestockTimes() {
   const nightCountdownMs = nightNextReset - now.getTime();
   const nightCountdown = `${pad(Math.floor(nightCountdownMs / 3.6e6))}h ${pad(Math.floor((nightCountdownMs % 3.6e6) / 6e4))}m ${pad(Math.floor((nightCountdownMs % 6e4) / 1000))}s`;
 
+  const merchantInterval = 14400 * 1000;
+  const { lastReset: merchantLastReset, nextReset: merchantNextReset } = getResetTimes(merchantInterval);
+  const merchantCountdownMs = merchantNextReset - now.getTime();
+  const merchantCountdown = `${pad(Math.floor(merchantCountdownMs / 3.6e6))}h ${pad(Math.floor((merchantCountdownMs % 3.6e6) / 6e4))}m ${pad(Math.floor((merchantCountdownMs % 6e4) / 1000))}s`;
+
+
   return {
     egg: {
       timestamp: eggNextReset,
@@ -82,11 +88,17 @@ function calculateRestockTimes() {
       LastRestock: formatTime(cosmeticLastReset),
       timeSinceLastRestock: timeSince(cosmeticLastReset)
     },
-    SwarmEvent: {
+    SummerHarvest: {
       timestamp: nightNextReset,
       countdown: nightCountdown,
       LastRestock: formatTime(nightLastReset),
       timeSinceLastRestock: timeSince(nightLastReset)
+    },
+    merchant: {
+      timestamp: merchantNextReset,
+      countdown: merchantCountdown,
+      LastRestock: formatTime(merchantLastReset),
+      timeSinceLastRestock: timeSince(merchantLastReset),
     }
   };
 }
