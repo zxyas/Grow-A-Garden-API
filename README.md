@@ -3,7 +3,7 @@
 ### If you like this pls give me a star 🙏
 ### i Recomand hosting your self since there is multiple people using vercel which makes it slower so uh yeah pls host it ur self it will be more faster
 
-## Premium API Costs: 5 Dollar with Real-Time Update With Weather and Stock For now more coming soon adding | Join this Discord Server to Purchase https://discord.gg/bf7MFhYpXb
+## Premium API Costs: 5 Dollar with Real-Time Update With Weather and Stock For now more coming soon adding | Join this Discord Server to Purchase https://discord.gg/bf7MFhYpXb | our new released features in the Paid API has Forever Pack Predictor based on algeriotim it 100% accurate 
 
 ### [CHANGELOGS](https://github.com/Just3itx/Grow-A-Garden-API/blob/main/CHANGELOG.md)
 
