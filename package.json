@@ -1,11 +1,11 @@
 {
-  
   "main": "Server.js",
   "scripts": {
     "start": "node Server.js"
   },
   "dependencies": {
     "blessed": "^0.1.81",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "cors": "^2.8.5",
   }
 }
