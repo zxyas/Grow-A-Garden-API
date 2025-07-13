@@ -4,9 +4,11 @@ const path = require('path');
 const os = require('os');
 const blessed = require('blessed');
 const cors = require('cors');
+const { register: registerStock } = require("./Funcs/GetStock");
 
 const configPath = path.join(__dirname, 'config.json');
 let config = { IPWhitelist: false, WhitelistedIPs: [], Dashboard: true, Port: 3000, UseGithubMutationData: true };
+
 
 if (fs.existsSync(configPath)) {
   config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -17,6 +19,12 @@ if (fs.existsSync(configPath)) {
 
 const app = express();
 const PORT = config.Port || 3000;
+
+registerStock(app);
+
+app.get('/', (req, res) => {
+  res.send('Grow a Garden API is running');
+});
 
 app.use(cors());
 
@@ -163,7 +171,7 @@ function updatePerf() {
   const usedMemMB = (mem.rss / 1024 / 1024).toFixed(2);
   const loadAvg = os.loadavg();
   const uptimeInSeconds = process.uptime();
-  
+
   const days = Math.floor(uptimeInSeconds / (24 * 3600));
   const hours = Math.floor((uptimeInSeconds % (24 * 3600)) / 3600);
   const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
