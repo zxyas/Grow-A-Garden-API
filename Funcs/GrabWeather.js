@@ -4,57 +4,56 @@ function createOptions(path) {
   return {
     method: "GET",
     hostname: "growagarden.gg",
-    path: path,
+    path,
     headers: {
-      accept: "*/*",
-      "accept-language": "en-US,en;q=0.9",
-      priority: "u=1, i",
-      referer: "https://growagarden.gg/weather",
+      accept: "application/json",
       "user-agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 OPR/119.0.0.0",
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-origin",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+        "(KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "cache-control": "no-cache"          // cegah proxy cache
     },
   };
 }
 
-function fetchWeatherStats(path) {
+function fetchJSON(path) {
   return new Promise((resolve, reject) => {
-    const options = createOptions(path);
-    const req = https.request(options, (res) => {
+    const req = https.request(createOptions(path), (res) => {
       let data = "";
-
-      res.on("data", (chunk) => {
-        data += chunk;
-      });
-
+      res.on("data", (c) => (data += c));
       res.on("end", () => {
         try {
-          const parsed = JSON.parse(data);
-          resolve(parsed);
-        } catch (err) {
-          reject(new Error("Failed to parse JSON: " + err.message));
+          resolve(JSON.parse(data));
+        } catch (e) {
+          reject(new Error("JSON parse error: " + e.message));
         }
       });
     });
-
-    req.on("error", (e) => {
-      reject(e);
-    });
-
+    req.on("error", reject);
     req.end();
   });
 }
 
+// -- Express register -------------------------------------------------------
 function register(app) {
-  app.get("/api/GetWeather", async (req, res) => {
-    const path = "/api/weather/stats";
+  // detail event realtime
+  app.get("/api/GetWeather", async (_req, res) => {
+    // tambahkan query acak agar proxy tidak meng‑cache 30 detik
+    const path = `/api/weather?source=gag&_=${Date.now()}`;
     try {
-      const stats = await fetchWeatherStats(path);
-      res.json(stats);
+      const json = await fetchJSON(path);
+      res.json(json);
     } catch (err) {
-      res.status(500).json({ error: err.message || "Failed to fetch weather stats" });
+      res.status(502).json({ error: err.message });
+    }
+  });
+
+  // endpoint lama /stats kalau memang masih ingin
+  app.get("/api/GetWeatherStats", async (_req, res) => {
+    try {
+      const json = await fetchJSON("/api/weather/stats");
+      res.json(json);
+    } catch (err) {
+      res.status(502).json({ error: err.message });
     }
   });
 }
