@@ -40,7 +40,7 @@ function calculateRestockTimes() {
   const eggInterval = 30 * 60 * 1000;
   const { lastReset: eggLastReset, nextReset: eggNextReset } = getResetTimes(eggInterval);
   const eggCountdownMs = eggNextReset - now.getTime();
-  const eggCountdown = `${pad(Math.floor(eggCountdownMs / 3.6e6))}h ${pad(Math.floor((eggCountdownMs % 3.6e6) / 6e4))}m ${pad(Math.floor((eggCountdownMs % 6e4) / 1000))}s`;
+  const eggCountdown = `${pad(Math.floor((eggCountdownMs % 3.6e6) / 6e4))}m ${pad(Math.floor((eggCountdownMs % 6e4) / 1000))}s`;
 
   const gearInterval = 5 * 60 * 1000;
   const { lastReset: gearLastReset, nextReset: gearNextReset } = getResetTimes(gearInterval);
